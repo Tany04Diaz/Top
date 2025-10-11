@@ -21,6 +21,8 @@ dependencies {
     compileOnly 'com.github.MilkBowl:VaultAPI:1.7.1'
     compileOnly 'com.github.PlaceholderAPI:PlaceholderAPI:2.11.3'
     compileOnly name: 'SaberFactions'
+    compileOnly files('libs/DecentHolograms.jar'
+    )
 }
 
 tasks {

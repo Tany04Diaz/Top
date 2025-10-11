@@ -2,7 +2,7 @@ name: Top
 version: '1.0-SNAPSHOT'
 main: org.akorpuzz.top.Top
 api-version: '1.21'
-softdepend: [Vault]
+softdepend: [Vault, PlaceholderAPI]
 commands:
   top:
     description: Muestra el ranking de facciones
@@ -15,12 +15,7 @@ commands:
   topreload:
     description: Recarga la configuración del plugin
     usage: /topreload
-permissions:
-  topfactions.use:
-    description: Permite usar el comando /top
-    default: true
-  topfactions.reload:
-    description: Permite recargar el plugin
-    default: op
+
+
 
 

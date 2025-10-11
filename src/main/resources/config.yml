@@ -15,3 +15,5 @@ values:
     GOLDEN_APPLE: 10000
     TOTEM_OF_UNDYING: 25000
 
+holograms:
+  update-interval-seconds: 30
