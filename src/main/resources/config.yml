@@ -1,3 +1,17 @@
 # Configuración base para el plugin Top
 mensaje-inicial: "Configuración cargada correctamente."
+values:
+  blocks:
+    BEACON: 100000
+    HOPPER: 5000
+    OBSERVER: 2500
+
+  spawners:
+    PIGMAN: 50000
+    BLAZE: 45000
+    ZOMBIE: 20000
+
+  items:
+    GOLDEN_APPLE: 10000
+    TOTEM_OF_UNDYING: 25000
 

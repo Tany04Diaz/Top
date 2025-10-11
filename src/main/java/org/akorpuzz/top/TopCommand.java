@@ -1,16 +1,17 @@
 package org.akorpuzz.top;
 
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.hover.content.Text;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TopCommand implements CommandExecutor {
 
@@ -18,62 +19,84 @@ public class TopCommand implements CommandExecutor {
 
     public TopCommand(Top plugin) {
         this.plugin = plugin;
+        // Asegúrate de que FactionScanner tenga referencia al plugin
+        FactionScanner.setPlugin(plugin);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Este comando solo puede usarse en el juego.");
+        if (!sender.hasPermission("top.use")) {
+            sender.sendMessage(ChatColor.RED + "No tienes permiso para usar este comando.");
             return true;
         }
 
-        int page = 1;
-        if (args.length > 0) {
-            try {
-                page = Integer.parseInt(args[0]);
-            } catch (NumberFormatException ignored) {}
+        if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+            plugin.reloadConfig();
+            plugin.loadValues();
+            FactionScanner.clearCache();
+            sender.sendMessage(ChatColor.GREEN + "Top recargado: config y caché actualizados.");
+            return true;
         }
 
         List<FactionScanner.FactionData> factions = FactionScanner.getValidFactions();
-        if (factions.isEmpty()) {
-            player.sendMessage(ChatColor.RED + "No hay facciones válidas registradas.");
-            return true;
-        }
+        sender.sendMessage(ChatColor.GOLD + "Top de facciones (" + factions.size() + ")");
 
-        int perPage = (page == 1) ? 5 : 15;
-        int start = (page - 1) * perPage;
-        int end = Math.min(start + perPage, factions.size());
+        int i = 1;
+        for (FactionScanner.FactionData f : factions) {
+            // Visible: número + nombre + valor total de la facción
+            String visible = ChatColor.YELLOW + "" + i + ". " + ChatColor.AQUA + f.name
+                    + ChatColor.WHITE + " - " + ChatColor.GOLD + String.format("$%.2f", f.totalValue);
 
-        if (start >= factions.size()) {
-            player.sendMessage(ChatColor.RED + "Esa página no existe.");
-            return true;
-        }
+            // Construir el texto del hover usando datos reales del escaneo
+            StringBuilder hover = new StringBuilder();
+            hover.append(ChatColor.GRAY).append("Leader: ").append(ChatColor.GREEN).append(f.leader).append("\n");
+            hover.append(ChatColor.GRAY).append("Miembros: ").append(ChatColor.GREEN).append(f.members.size()).append("\n");
+            hover.append(ChatColor.GRAY).append("Kills: ").append(ChatColor.GREEN).append(f.kills).append("\n");
+            hover.append(ChatColor.GRAY).append("Balance total miembros: ").append(ChatColor.GREEN).append(String.format("$%.2f", f.totalBalance)).append("\n");
+            hover.append(ChatColor.GRAY).append("Valor chunks: ").append(ChatColor.GOLD).append(String.format("$%.2f", f.claimValue)).append("\n");
+            hover.append(ChatColor.GRAY).append("Valor de la facción: ").append(ChatColor.GOLD).append(String.format("$%.2f", f.totalValue)).append("\n");
 
-        player.sendMessage(ChatColor.GREEN + "Comando /top ejecutado correctamente.");
-        player.sendMessage(ChatColor.BLUE + " Top de Facciones (Página " + page + ")");
+            // Spawners (ordenados desc por cantidad), Items y Blocks
+            if (f.spawners != null && !f.spawners.isEmpty()) {
+                hover.append(ChatColor.GRAY).append("Spawners:").append("\n");
+                f.spawners.entrySet().stream()
+                        .sorted(Map.Entry.<String,Integer>comparingByValue((a,b)->b-a))
+                        .forEach(e -> hover.append("  ").append(ChatColor.YELLOW).append(e.getKey()).append(": ").append(ChatColor.GREEN).append(e.getValue()).append("\n"));
+            }
 
-        for (int i = start; i < end; i++) {
-            FactionScanner.FactionData f = factions.get(i);
+            if (f.items != null && !f.items.isEmpty()) {
+                hover.append(ChatColor.GRAY).append("Items:").append("\n");
+                f.items.entrySet().stream()
+                        .sorted(Map.Entry.<String,Integer>comparingByValue((a,b)->b-a))
+                        .forEach(e -> hover.append("  ").append(ChatColor.YELLOW).append(formatName(e.getKey())).append(": ").append(ChatColor.GREEN).append(e.getValue()).append("\n"));
+            }
 
-            TextComponent line = new TextComponent(ChatColor.YELLOW + "" + (i + 1) + ". ");
-            TextComponent name = new TextComponent(f.name);
-            name.setColor(net.md_5.bungee.api.ChatColor.GOLD);
+            if (f.blocks != null && !f.blocks.isEmpty()) {
+                hover.append(ChatColor.GRAY).append("Blocks:").append("\n");
+                f.blocks.entrySet().stream()
+                        .sorted(Map.Entry.<String,Integer>comparingByValue((a,b)->b-a))
+                        .forEach(e -> hover.append("  ").append(ChatColor.YELLOW).append(formatName(e.getKey())).append(": ").append(ChatColor.GREEN).append(e.getValue()).append("\n"));
+            }
 
-            String hoverText =
-                    ChatColor.GOLD + "Líder: " + ChatColor.WHITE + f.leader + "\n" +
-                            ChatColor.GOLD + "Miembros: " + ChatColor.WHITE + f.members.size() + "\n" +
-                            ChatColor.GOLD + "Kills: " + ChatColor.WHITE + f.kills + "\n" +
-                            ChatColor.GOLD + "Dinero total: " + ChatColor.WHITE + "$" + String.format("%.2f", f.balance);
+            if (sender instanceof Player) {
+                Player p = (Player) sender;
+                TextComponent comp = new TextComponent(visible);
+                comp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover.toString())));
+                p.spigot().sendMessage(comp);
+            } else {
+                // Consola: mostrar resumen en texto plano
+                sender.sendMessage(visible + ChatColor.WHITE + " - Leader: " + ChatColor.GREEN + f.leader
+                        + ChatColor.WHITE + " - Valor de la facción: " + ChatColor.GOLD + String.format("$%.2f", f.totalValue));
+            }
 
-            name.setHoverEvent(new HoverEvent(
-                    HoverEvent.Action.SHOW_TEXT,
-                    new ComponentBuilder(hoverText).create()
-            ));
-
-            line.addExtra(name);
-            player.spigot().sendMessage(line);
+            i++;
+            if (i > 10) break; // límite por página; ajusta o elimina según necesites
         }
 
         return true;
+    }
+
+    private static String formatName(String raw) {
+        return raw.replace('_', ' ').toLowerCase();
     }
 }
