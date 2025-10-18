@@ -54,7 +54,7 @@ Sustituir  por índice 1..max-lines.
 • 	Mensaje de éxito al iniciar: 
 • 	Mensaje de actualización: 
 • 	Si ves errores tipo  significa que alguna lectura se ejecutó en un hilo asíncrono; revisar que  corra en hilo principal o use el patrón main-read / async-process.
-##Contribuciones y soporte
+## Contribuciones y soporte
 Reporta bugs, solicita mejoras o contribuye con PRs. Incluye versión del servidor, logs relevantes y  mínimo que reproduzca el problema.
   
 ## Downloads
