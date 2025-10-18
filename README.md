@@ -56,6 +56,7 @@ Sustituir  por índice 1..max-lines.
 • 	Si ves errores tipo  significa que alguna lectura se ejecutó en un hilo asíncrono; revisar que  corra en hilo principal o use el patrón main-read / async-process.
 ## Contribuciones y soporte
 Reporta bugs, solicita mejoras o contribuye con PRs. Incluye versión del servidor, logs relevantes y  mínimo que reproduzca el problema.
+algunas partes del README parecen faltar pues lo sigo redactando
   
 ## Downloads
 [Descarga](https://github.com/Tany04Diaz/Top/releases)
