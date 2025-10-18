@@ -10,6 +10,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public final class Top extends JavaPlugin {
 
@@ -105,21 +108,41 @@ public final class Top extends JavaPlugin {
     }
 
     /**
-     * Actualiza el snapshot de las facciones de manera asíncrona
-     * para que los placeholders reflejen siempre los datos actuales.
+     * Actualiza el snapshot de las facciones de manera segura:
+     * - Si ya estamos en el hilo principal, llamamos directamente.
+     * - Si estamos en un hilo asíncrono, solicitamos la lectura en el hilo principal con callSyncMethod.
+     * Evita deadlocks y accesos asíncronos a objetos de Bukkit.
      */
     private void actualizarSnapshotAsync() {
         if (topPlaceholder == null) return;
 
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            try {
-                var data = FactionScanner.getValidFactions(); // obtiene datos actualizados
-                topPlaceholder.updateSnapshot(data);
-                getLogger().info("§7TopPlaceholder snapshot actualizado (" + data.size() + " facciones).");
-            } catch (Throwable t) {
-                getLogger().warning("§cError al actualizar snapshot: " + t.getMessage());
+        try {
+            List<FactionScanner.FactionData> data;
+
+            if (Bukkit.isPrimaryThread()) {
+                // Ya en hilo principal: llamar directamente
+                long start = System.currentTimeMillis();
+                data = FactionScanner.getValidFactions();
+                long elapsed = System.currentTimeMillis() - start;
+                getLogger().info("§7TopPlaceholder sync read completed in " + elapsed + "ms.");
+            } else {
+                // Desde hilo asíncrono: pedir ejecución en hilo principal y esperar resultado
+                Future<List<FactionScanner.FactionData>> future = Bukkit.getScheduler().callSyncMethod(this, () -> FactionScanner.getValidFactions());
+                data = future.get();
             }
-        });
+
+            if (data == null) data = List.of();
+            topPlaceholder.updateSnapshot(data);
+            getLogger().info("§7TopPlaceholder snapshot actualizado (" + (data == null ? 0 : data.size()) + " facciones).");
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            getLogger().warning("§cActualización snapshot interrumpida: " + e.getMessage());
+        } catch (ExecutionException e) {
+            getLogger().warning("§cError al ejecutar actualización de snapshot (sync): " + e.getCause());
+        } catch (Throwable t) {
+            getLogger().warning("§cError inesperado al actualizar snapshot: " + t.getMessage());
+        }
     }
 
     // --- Economía (Vault) ---
@@ -131,22 +154,12 @@ public final class Top extends JavaPlugin {
         return economy != null;
     }
 
-    public Economy getEconomy() {
-        return economy;
-    }
-
-    public static Economy getEconomyStatic() {
-        return economy;
-    }
+    public Economy getEconomy() { return economy; }
+    public static Economy getEconomyStatic() { return economy; }
 
     // --- Dependencias ---
-    public static boolean isPlaceholderAPIEnabled() {
-        return placeholderAPIEnabled;
-    }
-
-    public static boolean isSaberFactionsEnabled() {
-        return saberFactionsEnabled;
-    }
+    public static boolean isPlaceholderAPIEnabled() { return placeholderAPIEnabled; }
+    public static boolean isSaberFactionsEnabled() { return saberFactionsEnabled; }
 
     // --- Configuración ---
     public void loadValues() {

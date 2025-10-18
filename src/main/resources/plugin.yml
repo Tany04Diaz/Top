@@ -1,5 +1,5 @@
 name: Top
-version: '1.0-SNAPSHOT'
+version: '1.0-RELEASE'
 main: org.akorpuzz.top.Top
 api-version: '1.21'
 softdepend: [Vault, PlaceholderAPI]
@@ -15,6 +15,10 @@ commands:
   topreload:
     description: Recarga la configuración del plugin
     usage: /topreload
+  topupdate:
+    description: Forzar actualización del Top y snapshot de placeholders
+    usage: /topupdate
+
 
 
 
