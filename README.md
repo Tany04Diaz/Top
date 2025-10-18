@@ -1,5 +1,5 @@
 ## Top — Sistema de ranking para facciones
-Versión: 1.0-SNAPSHOT
+Versión: 1.0-RELEASE
 Compatibilidad: Paper / Spigot 1.21.10
 Autor: TanyDiaz (AkorpuzZ)
 Dependencias: Vault (requerido); PlaceholderAPI (recomendado); SaberFactions (opcional); DecentHolograms (opcional).
