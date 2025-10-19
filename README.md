@@ -1,3 +1,4 @@
+![alt text](top.png "logo")
 # Top — Sistema de ranking para facciones
 Versión: 1.0-RELEASE
 Compatibilidad: Paper / Spigot 1.21.10
