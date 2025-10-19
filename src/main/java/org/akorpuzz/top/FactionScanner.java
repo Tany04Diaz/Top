@@ -19,6 +19,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.Material;
 
@@ -137,12 +138,26 @@ public class FactionScanner {
                                         Block nb = currentBlock.getRelative(face);
                                         if (nb == null) continue;
                                         BlockState nbState = nb.getState();
-                                        if (nbState instanceof Chest) {
+                                        if (nbState instanceof Chest || nbState instanceof Container) {
                                             try {
-                                                Inventory nbInv = ((Chest) nbState).getInventory();
-                                                if (nbInv != null && (nbInv == invRef || Objects.equals(nbInv.getHolder(), invRef.getHolder()))) {
-                                                    adjacentDouble = nb;
-                                                    break;
+                                                Inventory nbInv = ((Container) nbState).getInventory();
+                                                if (nbInv != null) {
+                                                    // Si ambos inventarios comparten el mismo holder (DoubleChestInventory) o son exactamente el mismo inventario,
+                                                    // consideramos que forman un cofre doble y marcamos adjacentDouble.
+                                                    InventoryHolder h1 = invRef.getHolder();
+                                                    InventoryHolder h2 = nbInv.getHolder();
+
+                                                    if (nbInv == invRef || (h1 != null && h2 != null && Objects.equals(h1, h2))) {
+                                                        adjacentDouble = nb;
+                                                        break;
+                                                    }
+
+                                                    // Alternativamente, detectar DoubleChestInventory directamente
+                                                    if (invRef instanceof DoubleChestInventory || nbInv instanceof DoubleChestInventory) {
+                                                        // ordenar por coordenadas para generar key determinista
+                                                        adjacentDouble = nb;
+                                                        break;
+                                                    }
                                                 }
                                             } catch (Exception ignored) {}
                                         }

@@ -1,5 +1,5 @@
 name: Top
-version: '1.0-RELEASE'
+version: '1.0.1-RELEASE'
 main: org.akorpuzz.top.Top
 api-version: '1.21'
 softdepend: [Vault, PlaceholderAPI]
